@@ -2,7 +2,8 @@
 
 ## Overview
 
-PRELICIT is a toolkit for the survey-based elicitation of economic preferences.
+PRELICIT is a toolkit for the survey-based elicitation of economic preferences
+and related decision attitudes.
 
 Its core objective is to make choice-based preference elicitation sufficiently
 simple and parsimonious for use in large-scale surveys, while retaining
@@ -38,7 +39,7 @@ relative to exhaustive choice lists.
 ## Preference domains
 
 PRELICIT implements a common adaptive elicitation framework across several
-domains of economic preferences:
+domains:
 
 - time preferences;
 - risk preferences;
@@ -86,13 +87,13 @@ removing information about outcome probabilities.
 
 Respondents again choose between an uncertain prospect and a certain monetary
 amount. However, the composition of the urn is unknown: respondents know the
-set of possible colors and outcomes but do not know how many balls of each
-color are contained in the urn.
+set of possible colors and associated outcomes but do not know how many balls
+of each color are contained in the urn.
 
-As a result, the probability of receiving each monetary outcome is not known.
+As a result, the probabilities of the possible monetary outcomes are not known.
 
 The certain comparison amount is adjusted adaptively to identify an interval
-containing the certainty equivalent of the ambiguous prospect.
+containing the respondent's equivalent valuation of the ambiguous prospect.
 
 The design can vary which colors generate the high and low outcomes while
 holding the basic choice environment constant. This makes it possible to
@@ -109,9 +110,8 @@ the target option is the arithmetic mean of the values associated with all
 balls in the urn.
 
 When the composition of the urn is known, the resulting payoff is therefore
-deterministic. The distinction between the target option and the comparison
-option does not arise from outcome risk or ambiguity, but from the complexity
-of evaluating a multi-component payoff relative to a simple certain amount.
+deterministic. The challenge comes from evaluating and aggregating several
+payoff components rather than from outcome risk or ambiguity.
 
 Respondents repeatedly choose between this complex option and a simple certain
 amount. The certain amount is adjusted adaptively to identify an interval
@@ -125,8 +125,8 @@ of complexity separately from attitudes toward risk and ambiguity.
 The elicitation procedure produces interval-censored observations rather than
 arbitrary point estimates.
 
-These intervals can subsequently be mapped into latent preference parameters
-using structural decision models.
+These intervals can be analyzed directly using model-free summaries or mapped
+into latent preference parameters using structural decision models.
 
 PRELICIT is intended to support estimation procedures that explicitly account
 for:
@@ -134,7 +134,8 @@ for:
 - interval censoring;
 - heterogeneity in individual preferences;
 - respondent-level response noise;
-- joint estimation across preference domains.
+- joint estimation across preference domains;
+- alternative structural specifications across domains.
 
 ## Design principles
 
