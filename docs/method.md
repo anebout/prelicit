@@ -8,40 +8,42 @@ and related decision attitudes.
 Its core objective is to make choice-based preference elicitation sufficiently
 simple and parsimonious for use in large-scale surveys while preserving a
 transparent link between respondents' choices and economically meaningful
-objects.
+model-free measures.
 
 PRELICIT uses short adaptive binary-choice sequences to locate individual
-equivalents. The standard implementation covers four domains:
+equivalents.
 
-- risk,
-- time,
-- ambiguity,
+The reference implementation covers four domains:
+
+- risk;
+- time;
+- ambiguity;
 - complexity.
 
-The benchmark questionnaire contains:
+The PRELICIT reference questionnaire contains:
 
-- 4 risk prospects,
-- 4 time prospects,
-- 3 ambiguity prospects,
+- 4 risk prospects;
+- 4 time prospects;
+- 3 ambiguity prospects;
 - 1 complexity prospect.
 
-Each prospect is elicited using an adaptive bisection procedure. The primary
-outputs of PRELICIT are model-free measures constructed directly from the
-elicited intervals. Structural estimation is not required to use the toolkit.
+Each prospect is elicited using an adaptive bisection procedure.
 
-For each domain, PRELICIT returns:
+The primary outputs of PRELICIT are the elicited intervals and model-free
+indicators constructed directly from these intervals. Structural estimation is
+deliberately outside the core scope of PRELICIT.
 
-1. the elicited interval for every task;
-2. the midpoint of every interval;
-3. a raw individual-level domain score;
-4. a standardized domain score;
-5. optional rank or percentile transformations.
+For each task, PRELICIT retains:
 
-The standardized score is the default summary measure. It preserves
-information on distances between respondents while expressing the measure in
-standard-deviation units.
+1. the lower and upper bounds of the elicited interval;
+2. the midpoint of the interval;
+3. information on completion of the bisection sequence.
 
----
+At the domain level, PRELICIT can additionally construct model-free summary
+indices and optional standardized or rank-based transformations.
+
+Raw elicited equivalents remain the primary PRELICIT outputs.
+
 
 # 1. Adaptive elicitation
 
@@ -50,32 +52,59 @@ standard-deviation units.
 For each task, the respondent repeatedly chooses between a target prospect and
 a comparison amount.
 
-The comparison amount is updated after each response according to a bisection
-algorithm.
+The comparison amount is updated after each response according to an adaptive
+bisection algorithm.
 
-After \(K\) binary choices, the procedure identifies an interval
+Let respondent \(i\) complete task \(j\). After \(K\) binary choices, the
+procedure identifies an interval
 
 \[
 [c^-_{ij},c^+_{ij}]
 \]
 
-containing the elicited equivalent of respondent \(i\) for task \(j\).
+containing the respondent's elicited equivalent for that task.
 
-The width of the final interval depends on:
+At each bisection step:
+
+1. a comparison amount is presented;
+2. the respondent chooses between the target prospect and the comparison;
+3. the response determines which part of the current interval is retained;
+4. the next comparison is chosen within the retained interval.
+
+This procedure concentrates questions around the respondent's implied
+indifference point while requiring only a small number of simple binary
+decisions.
+
+
+## 1.2 Elicited interval
+
+The elicited object is the interval
+
+\[
+[c^-_{ij},c^+_{ij}],
+\]
+
+not an exact point of indifference.
+
+The interval should therefore be retained in the PRELICIT output data.
+
+Its width is
+
+\[
+w_{ij}=c^+_{ij}-c^-_{ij}.
+\]
+
+The width depends on:
 
 - the initial elicitation range;
-- the number of bisection steps;
-- whether the respondent completed the full sequence.
+- the number of completed bisection steps;
+- the configuration of the task.
 
-The method therefore naturally accommodates incomplete sequences: a respondent
-who stops before the final step simply has a wider elicitation interval.
 
----
-
-## 1.2 Midpoint
+## 1.3 Midpoint
 
 For descriptive analyses and construction of model-free indicators, PRELICIT
-uses the midpoint of the final interval:
+also computes the midpoint of the final interval:
 
 \[
 \tilde c_{ij}
@@ -83,51 +112,99 @@ uses the midpoint of the final interval:
 \frac{c^-_{ij}+c^+_{ij}}{2}.
 \]
 
-The midpoint is not treated as the true latent equivalent. It is a convenient
-summary of the interval identified by the adaptive procedure.
+The midpoint is a convenient summary of the information contained in the
+elicited interval.
 
-Users interested in interval-censored structural estimation should use the
-original lower and upper bounds rather than replacing the interval by its
-midpoint.
+It should not be interpreted as an exactly observed latent indifference point.
 
----
+PRELICIT therefore always retains both the original interval and its midpoint.
 
-# 2. Risk
 
-## 2.1 Task
+## 1.4 Incomplete bisection sequences
+
+The interval representation naturally accommodates incomplete elicitation
+sequences.
+
+If a respondent stops before completing all bisection steps, PRELICIT retains
+the interval implied by the choices completed up to that point.
+
+The resulting interval is wider than the interval obtained after a complete
+sequence, but the available information is not discarded.
+
+
+# 2. PRELICIT reference design
+
+The reference design reproduces the preference-elicitation questionnaire on
+which PRELICIT is based.
+
+It contains:
+
+| Domain | Number of tasks | Main elicited object |
+|---|---:|---|
+| Risk | 4 | Certainty equivalent |
+| Time | 4 | Sooner equivalent |
+| Ambiguity | 3 | Ambiguity equivalent |
+| Complexity | 1 | Simplicity equivalent |
+
+The reference parameters are fixed and are reported below.
+
+Using these parameters allows researchers to reproduce the original PRELICIT
+instrument and facilitates comparison of results across studies.
+
+PRELICIT also supports configurable implementations, described in Section 7.
+
+
+# 3. Risk
+
+## 3.1 Risk task
 
 A risk task presents a binary lottery
 
 \[
-R_j=(x_j,p_j,y_j)
+R_j=(x_j,p_j,y_j),
 \]
 
-and elicits its certainty equivalent.
+where:
 
-The respondent chooses repeatedly between the lottery and a sure monetary
+- \(x_j\) is the high monetary outcome;
+- \(y_j\) is the low monetary outcome;
+- \(p_j\) is the known probability of receiving \(x_j\).
+
+The respondent repeatedly chooses between the lottery and a sure monetary
 amount.
 
-The adaptive procedure returns an interval
+The adaptive procedure identifies an interval
 
 \[
 [c^-_{iR_j},c^+_{iR_j}]
 \]
 
-containing the respondent's elicited certainty equivalent.
+containing the respondent's certainty equivalent for the lottery.
 
 Its midpoint is
 
 \[
-\tilde c_{iR_j}
+\widetilde{CE}_{ij}
 =
 \frac{c^-_{iR_j}+c^+_{iR_j}}{2}.
 \]
 
----
+Higher certainty equivalents indicate a higher valuation of the corresponding
+risky prospect.
 
-## 2.2 Benchmark risk prospects
 
-The benchmark implementation uses four risk prospects:
+## 3.2 Reference risk prospects
+
+The PRELICIT reference design contains four risk prospects:
+
+| Task | High outcome \(x\) | Probability \(p\) | Low outcome \(y\) |
+|---|---:|---:|---:|
+| R1 | 80 | 0.25 | 0 |
+| R2 | 80 | 0.50 | 0 |
+| R3 | 80 | 0.75 | 0 |
+| R4 | 100 | 0.50 | 20 |
+
+Thus,
 
 \[
 R_1=(80,0.25,0),
@@ -147,54 +224,87 @@ and
 R_4=(100,0.50,20).
 \]
 
-The four tasks generate variation in both probability and payoff structure.
+The first three prospects vary the probability of the high outcome while
+holding monetary outcomes constant.
 
----
+The fourth prospect changes the payoff support while retaining a probability
+of 0.50.
 
-## 2.3 Model-free risk score
 
-The raw risk score is the average certainty-equivalent midpoint across the four
-risk tasks:
+## 3.3 Model-free risk measures
+
+The task-level model-free risk measures are the four certainty-equivalent
+midpoints
+
+\[
+\widetilde{CE}_{i1},
+\widetilde{CE}_{i2},
+\widetilde{CE}_{i3},
+\widetilde{CE}_{i4}.
+\]
+
+These task-level measures are the primary risk outputs.
+
+For applications requiring a single individual-level summary of the reference
+design, PRELICIT can compute
 
 \[
 RiskRaw_i
 =
 \frac{1}{4}
 \sum_{j=1}^{4}
-\tilde c_{iR_j}.
+\widetilde{CE}_{ij}.
 \]
 
-Higher values indicate a greater valuation of risky prospects and are therefore
-interpreted as greater risk tolerance.
+Higher values indicate a greater average valuation of the four risky prospects
+and therefore greater risk tolerance within the PRELICIT reference design.
 
-The default standardized measure is
+This is a model-free empirical index. It is not a structural parameter of a
+specific utility function.
+
+
+## 3.4 Scale-free task measures
+
+For comparisons involving different monetary stakes, a task-level certainty
+equivalent can optionally be expressed relative to its payoff range:
 
 \[
-RiskZ_i
+RiskRelative_{ij}
 =
-\frac{RiskRaw_i-\overline{RiskRaw}}
-{sd(RiskRaw)}.
+\frac{\widetilde{CE}_{ij}-y_j}
+{x_j-y_j}.
 \]
 
-Thus:
+This transformation places the elicited equivalent relative to the low and
+high outcomes of the corresponding task.
 
-- \(RiskZ_i=0\) corresponds to the sample mean;
-- \(RiskZ_i=1\) corresponds to one sample standard deviation above the mean;
-- higher values indicate greater risk tolerance.
+PRELICIT retains the monetary equivalent even when this relative measure is
+computed.
 
----
 
-# 3. Time
+# 4. Time
 
-## 3.1 Task
+## 4.1 Time task
 
 A time task elicits the sooner equivalent of a later monetary payment.
 
-For a payment \(x_j\) received at date \(t_j+\tau_j\), respondents repeatedly
-choose between the later payment and an amount available at the sooner date
-\(t_j\).
+Let \(x_j\) denote an amount received at date
 
-The procedure returns
+\[
+t_j+\tau_j,
+\]
+
+where \(t_j\) is the sooner date and \(\tau_j\) is the additional delay to the
+later payment.
+
+Respondents repeatedly choose between:
+
+- the later payment \(x_j\) at \(t_j+\tau_j\); and
+- a comparison amount received at the sooner date \(t_j\).
+
+The comparison amount is updated using the same adaptive bisection principle.
+
+The procedure identifies
 
 \[
 [c^-_{iT_j},c^+_{iT_j}],
@@ -203,316 +313,584 @@ The procedure returns
 with midpoint
 
 \[
-\tilde c_{iT_j}
+\widetilde{SE}^{time}_{ij}
 =
 \frac{c^-_{iT_j}+c^+_{iT_j}}{2}.
 \]
 
-A larger sooner equivalent means that the respondent requires a larger amount
-at the sooner date to give up the later payment and therefore indicates greater
-patience.
+A larger sooner equivalent means that a larger sooner payment is required to
+make the respondent indifferent to the later payment.
 
----
+Within a given task, higher values therefore indicate greater patience.
 
-## 3.2 Benchmark time prospects
 
-The benchmark implementation uses four time prospects:
+## 4.2 Reference time prospects
+
+The PRELICIT reference design contains four time prospects:
 
 | Task | Later amount | Sooner date | Additional delay |
-|------|--------------|-------------|------------------|
+|---|---:|---|---|
 | T1 | 80 | 1 day | 3 months |
 | T2 | 80 | 1 day | 6 months |
 | T3 | 80 | 1 day | 12 months |
 | T4 | 80 | 6 months | 6 months |
 
-These tasks vary both the length of the delay and, for T4, the timing of the
-sooner outcome.
+T1--T3 vary the delay while keeping the sooner date approximately immediate.
 
----
+T4 shifts both payments into the future, with the sooner payment occurring
+after six months and the later payment an additional six months later.
 
-## 3.3 Model-free patience score
 
-The raw time score is
+## 4.3 Model-free time measures
+
+The primary task-level measures are the four sooner-equivalent midpoints
+
+\[
+\widetilde{SE}^{time}_{i1},
+\widetilde{SE}^{time}_{i2},
+\widetilde{SE}^{time}_{i3},
+\widetilde{SE}^{time}_{i4}.
+\]
+
+For applications requiring a single summary of the PRELICIT reference design,
 
 \[
 TimeRaw_i
 =
 \frac{1}{4}
 \sum_{j=1}^{4}
-\tilde c_{iT_j}.
+\widetilde{SE}^{time}_{ij}.
 \]
 
-Higher values indicate greater patience.
+Higher values indicate greater average patience across the four reference
+tasks.
 
-The default standardized measure is
-
-\[
-PatienceZ_i
-=
-\frac{TimeRaw_i-\overline{TimeRaw}}
-{sd(TimeRaw)}.
-\]
-
-Higher values therefore indicate greater patience.
-
-### Interpretation
-
-This measure is model-free in the sense that its construction requires no
+This score is model-free in the sense that its construction requires no
 assumption about the functional form of utility or discounting.
 
-It should not, however, be interpreted as a pure structural measure of time
-preference. Under nonlinear utility, sooner equivalents can depend jointly on
-utility curvature and discounting.
+It should not, however, be interpreted as a pure structural discount-rate
+parameter. Under nonlinear utility, sooner equivalents may depend jointly on
+the valuation of monetary outcomes and intertemporal preferences.
 
-The model-free score is therefore best interpreted as an empirical measure of
+The measure is therefore best interpreted as an empirical index of
 intertemporal valuation.
 
----
 
-# 4. Ambiguity
+## 4.4 Scale-free time measures
 
-## 4.1 Principle
-
-Ambiguity attitudes are measured by comparing the valuation of an ambiguous
-prospect with the valuation of a matched risky prospect.
-
-For ambiguity task \(A_j\), let
+When later amounts differ across configurable implementations, PRELICIT can
+optionally report
 
 \[
-\tilde c^{amb}_{iA_j}
-\]
-
-denote the midpoint of the elicited equivalent for the ambiguous prospect, and
-
-\[
-\tilde c^{risk}_{iA_j}
-\]
-
-the midpoint for the corresponding risky benchmark.
-
-The task-level ambiguity difference is
-
-\[
-d^{A}_{ij}
+TimeRelative_{ij}
 =
-\tilde c^{amb}_{iA_j}
--
-\tilde c^{risk}_{iA_j}.
+\frac{\widetilde{SE}^{time}_{ij}}
+{x_j}.
 \]
 
-If the ambiguous prospect is valued less than its matched risky benchmark, then
+This expresses the sooner equivalent as a fraction of the later monetary
+amount.
+
+The monetary sooner equivalent remains the primary output.
+
+
+# 5. Ambiguity
+
+## 5.1 Ambiguity task
+
+The ambiguity module preserves the main presentation of the risk task while
+removing information about the composition of the urn.
+
+Respondents know:
+
+- the possible colors;
+- which colors are associated with each monetary outcome;
+- the possible monetary outcomes.
+
+However, they do not know how many balls of each color are contained in the
+urn.
+
+The probabilities of the monetary outcomes are therefore not objectively known
+to the respondent.
+
+The respondent repeatedly chooses between the ambiguous prospect and a certain
+monetary amount.
+
+The adaptive procedure identifies
 
 \[
-d^{A}_{ij}<0,
+[c^-_{iA_j},c^+_{iA_j}],
 \]
 
-which is consistent with ambiguity aversion.
+with midpoint
 
----
+\[
+\widetilde{AE}_{ij}
+=
+\frac{c^-_{iA_j}+c^+_{iA_j}}{2},
+\]
 
-## 4.2 Model-free ambiguity score
+where \(AE\) denotes the ambiguity equivalent.
 
-With three benchmark ambiguity tasks, define
+
+## 5.2 Reference ambiguity prospects
+
+The PRELICIT reference design contains three ambiguity prospects.
+
+All three use monetary outcomes of EUR 80 and EUR 0 and correspond to
+likelihood levels 0.25, 0.50, and 0.75.
+
+| Task | High outcome | Likelihood level | Low outcome |
+|---|---:|---:|---:|
+| A1 | 80 | 0.25 | 0 |
+| A2 | 80 | 0.50 | 0 |
+| A3 | 80 | 0.75 | 0 |
+
+The term "likelihood level" describes the structure of the ambiguity task. It
+should not be interpreted as a known objective probability of receiving the
+high outcome, since the composition of the urn is unknown.
+
+The three ambiguity tasks are designed to be matched to risk tasks R1, R2, and
+R3, respectively.
+
+
+## 5.3 Model-free ambiguity measures
+
+The primary ambiguity outputs are the three ambiguity-equivalent midpoints
+
+\[
+\widetilde{AE}_{i1},
+\widetilde{AE}_{i2},
+\widetilde{AE}_{i3}.
+\]
+
+Because the ambiguity tasks are matched to corresponding risky prospects,
+PRELICIT can additionally compute task-level differences
+
+\[
+AmbiguityDifference_{ij}
+=
+\widetilde{AE}_{ij}
+-
+\widetilde{CE}_{ij},
+\qquad j\in\{1,2,3\}.
+\]
+
+Under this convention:
+
+- a negative value means that the ambiguous prospect is valued less than the
+  matched risky prospect;
+- a value of zero means equal valuations;
+- a positive value means that the ambiguous prospect is valued more than the
+  matched risky prospect.
+
+A negative difference is therefore consistent with ambiguity aversion for that
+matched pair.
+
+
+## 5.4 Aggregate ambiguity index
+
+For applications requiring a single model-free ambiguity summary,
 
 \[
 AmbiguityRaw_i
 =
 \frac{1}{3}
 \sum_{j=1}^{3}
-d^{A}_{ij}.
+AmbiguityDifference_{ij}.
 \]
 
 Under this convention:
 
-- larger values indicate greater ambiguity tolerance;
-- smaller values indicate greater ambiguity aversion.
+- higher values indicate greater ambiguity tolerance;
+- lower values indicate greater ambiguity aversion.
 
-The standardized score is
-
-\[
-AmbiguityToleranceZ_i
-=
-\frac{AmbiguityRaw_i-\overline{AmbiguityRaw}}
-{sd(AmbiguityRaw)}.
-\]
-
-Higher values indicate greater ambiguity tolerance.
-
-For applications where a measure of ambiguity *aversion* is preferred, users
-can simply reverse the sign:
+If a positively oriented ambiguity-aversion measure is preferred, PRELICIT can
+also report
 
 \[
-AmbiguityAversionZ_i
+AmbiguityAversionRaw_i
 =
 -
-AmbiguityToleranceZ_i.
+AmbiguityRaw_i.
 \]
 
----
+These differences are descriptive model-free indicators rather than structural
+parameters from a particular model of decision under ambiguity.
 
-# 5. Complexity
 
-## 5.1 Principle
+# 6. Complexity
 
-Complexity attitudes are measured by comparing the valuation of a complex
-prospect with that of a simpler economically matched benchmark.
+## 6.1 Mirror-task principle
+
+The PRELICIT complexity task is a deterministic mirror of a corresponding risk
+task.
+
+In the risk task, one ball is drawn from an urn and the realized color
+determines the monetary payoff.
+
+In the complexity task, the payoff is instead determined using all balls in
+the urn.
+
+Each color is associated with a monetary value and the payoff is the arithmetic
+mean of the monetary values associated with all balls.
+
+Because the composition of the urn is known in the complexity task and all
+balls enter the calculation, the final payoff is deterministic.
+
+The task therefore removes outcome stochasticity while retaining the need to
+evaluate and aggregate the payoff information represented by the urn.
+
+
+## 6.2 Simplicity equivalent
+
+The complexity module elicits a simplicity equivalent.
 
 Let
 
 \[
-\tilde c^{simple}_{iC}
+SE_i
 \]
 
-denote the midpoint of the equivalent elicited for the simple prospect and
+denote the respondent's simplicity equivalent for the deterministic mirror
+prospect.
+
+PRELICIT identifies an interval
 
 \[
-\tilde c^{complex}_{iC}
+[c^-_{iC},c^+_{iC}]
 \]
 
-the midpoint for the corresponding complex prospect.
+containing this equivalent.
 
-Define the complexity penalty as
+Its midpoint is
 
 \[
-ComplexityRaw_i
+\widetilde{SE}_i
 =
-\tilde c^{simple}_{iC}
--
-\tilde c^{complex}_{iC}.
+\frac{c^-_{iC}+c^+_{iC}}{2}.
 \]
 
-If
+
+## 6.3 Reference complexity prospect
+
+The current PRELICIT reference design contains one complexity task.
+
+It is the deterministic mirror of the 0.50 risk prospect with monetary outcomes
+EUR 80 and EUR 0.
+
+The corresponding objective benchmark is
 
 \[
-\tilde c^{complex}_{iC}
-<
-\tilde c^{simple}_{iC},
-\]
-
-then
-
-\[
-ComplexityRaw_i>0,
-\]
-
-meaning that the respondent values the complex representation less than the
-simple benchmark.
-
-Higher values are therefore interpreted as greater complexity aversion.
-
----
-
-## 5.2 Standardized complexity score
-
-The default standardized score is
-
-\[
-ComplexityAversionZ_i
+EV
 =
-\frac{ComplexityRaw_i-\overline{ComplexityRaw}}
-{sd(ComplexityRaw)}.
+0.50\times80
++
+0.50\times0
+=
+40.
 \]
 
-Higher values indicate greater complexity aversion.
+Thus the reference complexity task is matched to risk prospect R2.
 
----
 
-# 6. Standardization
+## 6.4 Model-free complexity measures
 
-## 6.1 Default transformation
+The primary complexity output is the simplicity-equivalent midpoint
 
-PRELICIT standardizes individual-level domain scores using the sample mean and
-standard deviation:
+\[
+\widetilde{SE}_i.
+\]
+
+The difference between the simplicity equivalent and the objective benchmark is
+
+\[
+ComplexityComponent_i
+=
+\widetilde{SE}_i-EV.
+\]
+
+For the PRELICIT reference task,
+
+\[
+ComplexityComponent_i
+=
+\widetilde{SE}_i-40.
+\]
+
+Under this convention:
+
+- zero corresponds to valuation at the objective benchmark;
+- a negative value means that the deterministic complex prospect is valued
+  below its objective benchmark;
+- a positive value means that it is valued above its objective benchmark.
+
+For applications preferring an index increasing in complexity aversion,
+PRELICIT can report
+
+\[
+ComplexityAversionRaw_i
+=
+EV-\widetilde{SE}_i.
+\]
+
+Higher values of this sign-reversed measure indicate a larger penalty assigned
+to the complex deterministic prospect.
+
+
+## 6.5 Risk-complexity decomposition
+
+Because the reference complexity task is paired with risk prospect R2, PRELICIT
+can construct the model-free identity
+
+\[
+CE_i-EV
+=
+(CE_i-SE_i)
++
+(SE_i-EV).
+\]
+
+Using midpoint measures,
+
+\[
+\widetilde{CE}_{i2}-40
+=
+(\widetilde{CE}_{i2}-\widetilde{SE}_i)
++
+(\widetilde{SE}_i-40).
+\]
+
+This yields three quantities:
+
+\[
+ConventionalRisk_i
+=
+\widetilde{CE}_{i2}-40,
+\]
+
+\[
+StochasticityComponent_i
+=
+\widetilde{CE}_{i2}-\widetilde{SE}_i,
+\]
+
+and
+
+\[
+ComplexityComponent_i
+=
+\widetilde{SE}_i-40.
+\]
+
+The decomposition requires no parametric utility or probability-weighting
+model.
+
+PRELICIT reports these quantities as model-free descriptive indicators.
+
+
+# 7. Reference and configurable implementations
+
+## 7.1 Reference implementation
+
+The PRELICIT reference implementation reproduces the benchmark questionnaire
+described above.
+
+Its purpose is to facilitate:
+
+- replication;
+- reuse of the original elicitation instrument;
+- comparability across studies;
+- accumulation of evidence using a common design.
+
+Researchers wishing to use the original PRELICIT instrument should retain the
+reference task parameters unchanged.
+
+
+## 7.2 Configurable implementation
+
+PRELICIT also supports controlled customization of the elicitation design.
+
+The configurable mode preserves the main structure of the reference
+instrument while allowing researchers to adapt monetary outcomes to their
+application.
+
+For the risk and ambiguity modules, the core probability or likelihood levels
+
+\[
+0.25,\qquad 0.50,\qquad 0.75
+\]
+
+are retained.
+
+Researchers may modify monetary outcomes while preserving this common
+probability/likelihood structure.
+
+This restriction maintains a close connection to the PRELICIT reference design
+and facilitates comparison across implementations.
+
+
+## 7.3 Bisection-compatible outcomes
+
+Configurable monetary outcomes must generate a valid bisection tree.
+
+PRELICIT therefore checks proposed task parameters before generating the
+questionnaire.
+
+A valid configuration must ensure that the successive comparison amounts
+generated by the bisection procedure remain simple integer monetary amounts.
+
+Configurations that do not satisfy the bisection constraints are rejected by
+the software.
+
+The exact admissibility rule is determined by the elicitation range and the
+number of bisection steps and is enforced automatically rather than left to the
+user.
+
+
+## 7.4 Optional complexity extensions
+
+The reference design contains only the 0.50 complexity mirror task.
+
+The configurable framework can additionally support deterministic mirror tasks
+corresponding to the 0.25 and 0.75 risk structures.
+
+This gives the optional matched structure
+
+\[
+R_{0.25}\leftrightarrow C_{0.25},
+\]
+
+\[
+R_{0.50}\leftrightarrow C_{0.50},
+\]
+
+\[
+R_{0.75}\leftrightarrow C_{0.75}.
+\]
+
+These additional complexity tasks are extensions of the PRELICIT framework and
+are not part of the original reference questionnaire.
+
+When such extensions are used, the relevant deterministic benchmark for each
+mirror task is calculated from the corresponding payoff structure.
+
+
+# 8. Standardization and transformations
+
+## 8.1 Primary measures
+
+The primary PRELICIT measures are always the untransformed elicitation outputs:
+
+- interval bounds;
+- interval widths;
+- midpoint equivalents;
+- task-level model-free differences where applicable.
+
+Raw measures should be retained even when additional transformations are used.
+
+
+## 8.2 Z-score standardization
+
+For applications requiring standardized variables, any individual-level score
+\(S_i\) can optionally be transformed into
 
 \[
 Z_i
 =
-\frac{S_i-\bar S}{sd(S)},
+\frac{S_i-\bar S}
+{sd(S)}.
 \]
 
-where \(S_i\) denotes the corresponding raw domain score.
+The resulting variable has sample mean zero and sample standard deviation one.
 
-The standardized measures are therefore relative measures within the analytical
-sample.
+Z-scores can be useful when:
 
-By construction:
+- comparing effect sizes across domains;
+- displaying several PRELICIT measures in the same regression or figure;
+- expressing associations in standard-deviation units.
 
-\[
-E[Z]=0,
-\qquad
-sd(Z)=1.
-\]
+They are not the default PRELICIT measurement scale.
 
-The principal advantage over rank transformations is that z-scores preserve
-information about distances between respondents.
 
-For example, an individual whose raw score lies far above the mean remains far
-above the mean after standardization.
+## 8.3 Sample dependence of z-scores
 
----
+Z-scores depend on the mean and standard deviation of the sample used for
+standardization.
 
-## 6.2 Sample dependence
-
-Because z-scores depend on the mean and standard deviation of the reference
-sample, they are not intrinsically comparable across independently standardized
-datasets.
+They are therefore not intrinsically comparable across datasets standardized
+independently.
 
 For replication, longitudinal analysis, or comparisons across samples,
-researchers should either:
+researchers should:
 
-1. retain and report the raw scores;
-2. use a common reference mean and standard deviation;
-3. pool samples before standardization when substantively appropriate.
+1. retain and report the underlying raw measures;
+2. use a common reference mean and standard deviation where appropriate; or
+3. pool samples before standardization when substantively justified.
 
-PRELICIT therefore always retains raw scores in addition to standardized
-scores.
 
----
+## 8.4 Rank and percentile transformations
 
-# 7. Optional rank-based measures
+Rank and percentile transformations are available as optional analysis tools.
 
-Rank and percentile transformations are available as optional robustness
-measures.
+They can be useful when researchers wish to reduce sensitivity to extreme
+values or focus on respondents' relative positions in the empirical
+distribution.
 
-For a raw score \(S_i\), a rank-based transformation uses only the respondent's
-relative position in the empirical distribution.
+Their main limitation is that they discard information about cardinal distances
+between respondents.
 
-Rank transformations have two advantages:
+For this reason, PRELICIT treats ranks and percentiles as optional
+transformations rather than primary outputs.
 
-- robustness to extreme values;
-- minimal reliance on cardinal differences between raw scores.
 
-Their main disadvantage is that they discard information on distances between
-respondents.
+# 9. Recommended output variables
 
-For this reason, PRELICIT uses standardized raw scores as the default and ranks
-as an optional transformation.
+A standard PRELICIT implementation should retain task-level data, domain-level
+indicators, and questionnaire metadata.
 
----
 
-# 8. Recommended output variables
+## 9.1 Task-level outputs
 
-A standard PRELICIT implementation should retain three levels of information.
-
-## 8.1 Task-level outputs
-
-For every respondent and prospect:
+For every respondent and every task, PRELICIT should retain:
 
 - lower interval bound;
 - upper interval bound;
 - interval width;
 - midpoint;
-- number of completed bisection steps.
+- number of completed bisection steps;
+- task identifier;
+- task parameters.
 
-For example:
+Example variable names include:
 
 ```text
 risk_r1_lower
 risk_r1_upper
 risk_r1_midpoint
 risk_r1_width
+risk_r1_steps
+
+risk_r2_lower
+risk_r2_upper
+risk_r2_midpoint
+risk_r2_width
+risk_r2_steps
 
 time_t1_lower
 time_t1_upper
 time_t1_midpoint
 time_t1_width
+time_t1_steps
+
+ambiguity_a1_lower
+ambiguity_a1_upper
+ambiguity_a1_midpoint
+ambiguity_a1_width
+ambiguity_a1_steps
+
+complexity_c50_lower
+complexity_c50_upper
+complexity_c50_midpoint
+complexity_c50_width
+complexity_c50_steps
