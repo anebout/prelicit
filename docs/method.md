@@ -1,4 +1,4 @@
-# PRELICIT elicitation methodology
+# PRELICIT methodology
 
 ## Overview
 
@@ -6,147 +6,513 @@ PRELICIT is a toolkit for the survey-based elicitation of economic preferences
 and related decision attitudes.
 
 Its core objective is to make choice-based preference elicitation sufficiently
-simple and parsimonious for use in large-scale surveys, while retaining
-structural interpretability.
+simple and parsimonious for use in large-scale surveys while preserving a
+transparent link between respondents' choices and economically meaningful
+objects.
 
-Rather than presenting respondents with long lists of choices, PRELICIT relies
-on adaptive sequences of binary decisions. Each response determines the next
-choice shown to the respondent.
+PRELICIT uses short adaptive binary-choice sequences to locate individual
+equivalents. The standard implementation covers four domains:
 
-## Adaptive bisection procedure
+- risk,
+- time,
+- ambiguity,
+- complexity.
 
-For each elicitation task, an initial interval containing the relevant
-equivalent is defined.
+The benchmark questionnaire contains:
 
-At each step:
+- 4 risk prospects,
+- 4 time prospects,
+- 3 ambiguity prospects,
+- 1 complexity prospect.
 
-1. the midpoint of the current interval is presented to the respondent;
-2. the respondent makes a binary choice;
-3. the response determines which half of the interval is retained;
-4. the procedure continues until the desired precision is reached.
+Each prospect is elicited using an adaptive bisection procedure. The primary
+outputs of PRELICIT are model-free measures constructed directly from the
+elicited intervals. Structural estimation is not required to use the toolkit.
 
-After \(K\) binary choices, the procedure yields an interval
+For each domain, PRELICIT returns:
+
+1. the elicited interval for every task;
+2. the midpoint of every interval;
+3. a raw individual-level domain score;
+4. a standardized domain score;
+5. optional rank or percentile transformations.
+
+The standardized score is the default summary measure. It preserves
+information on distances between respondents while expressing the measure in
+standard-deviation units.
+
+---
+
+# 1. Adaptive elicitation
+
+## 1.1 General principle
+
+For each task, the respondent repeatedly chooses between a target prospect and
+a comparison amount.
+
+The comparison amount is updated after each response according to a bisection
+algorithm.
+
+After \(K\) binary choices, the procedure identifies an interval
 
 \[
-[c^-, c^+]
+[c^-_{ij},c^+_{ij}]
 \]
 
-containing the respondent's elicited equivalent.
+containing the elicited equivalent of respondent \(i\) for task \(j\).
 
-This adaptive design reduces the number of decisions required from respondents
-relative to exhaustive choice lists.
+The width of the final interval depends on:
 
-## Preference domains
+- the initial elicitation range;
+- the number of bisection steps;
+- whether the respondent completed the full sequence.
 
-PRELICIT implements a common adaptive elicitation framework across several
-domains:
+The method therefore naturally accommodates incomplete sequences: a respondent
+who stops before the final step simply has a wider elicitation interval.
 
-- time preferences;
-- risk preferences;
-- ambiguity attitudes;
-- attitudes toward complexity.
+---
 
-Across domains, respondents repeatedly choose between a target prospect and
-a simpler comparison option. The value of the comparison option is updated
-adaptively according to previous responses, allowing PRELICIT to identify an
-interval containing the respondent's equivalent using a small number of binary
-choices.
+## 1.2 Midpoint
 
-## Time preferences
+For descriptive analyses and construction of model-free indicators, PRELICIT
+uses the midpoint of the final interval:
 
-The time-preference module elicits sooner equivalents.
+\[
+\tilde c_{ij}
+=
+\frac{c^-_{ij}+c^+_{ij}}{2}.
+\]
 
-Respondents choose between a fixed monetary amount received at a later date
-and a smaller amount received earlier. The earlier amount is adjusted
-adaptively according to previous responses.
+The midpoint is not treated as the true latent equivalent. It is a convenient
+summary of the interval identified by the adaptive procedure.
 
-The module varies both the delay to the later outcome and, across tasks, the
-timing of the earlier outcome. The final elicited interval bounds the amount
-received earlier that makes the respondent approximately indifferent between
-the two dated outcomes.
+Users interested in interval-censored structural estimation should use the
+original lower and upper bounds rather than replacing the interval by its
+midpoint.
 
-## Risk preferences
+---
 
-The risk-preference module elicits certainty equivalents for risky prospects
-with known probabilities.
+# 2. Risk
 
-Respondents choose between a lottery and a certain monetary amount. Lotteries
-are represented using an urn with a known composition: one ball is drawn and
-the monetary payoff depends on its color. Because the composition of the urn
-is explicitly known, the probabilities of the possible outcomes are known to
-the respondent.
+## 2.1 Task
 
-Across tasks, PRELICIT can vary outcome probabilities, payoff levels, and
-payoff spreads. The certain amount is adjusted adaptively until an interval
-containing the certainty equivalent of the risky prospect is identified.
+A risk task presents a binary lottery
 
-## Ambiguity attitudes
+\[
+R_j=(x_j,p_j,y_j)
+\]
 
-The ambiguity module preserves the basic structure of the risk task while
-removing information about outcome probabilities.
+and elicits its certainty equivalent.
 
-Respondents again choose between an uncertain prospect and a certain monetary
-amount. However, the composition of the urn is unknown: respondents know the
-set of possible colors and associated outcomes but do not know how many balls
-of each color are contained in the urn.
+The respondent chooses repeatedly between the lottery and a sure monetary
+amount.
 
-As a result, the probabilities of the possible monetary outcomes are not known.
+The adaptive procedure returns an interval
 
-The certain comparison amount is adjusted adaptively to identify an interval
-containing the respondent's equivalent valuation of the ambiguous prospect.
+\[
+[c^-_{iR_j},c^+_{iR_j}]
+\]
 
-The design can vary which colors generate the high and low outcomes while
-holding the basic choice environment constant. This makes it possible to
-compare valuations of risky and ambiguous prospects within a common
-elicitation framework.
+containing the respondent's elicited certainty equivalent.
 
-## Attitudes toward complexity
+Its midpoint is
 
-The complexity module differs from both the risk and ambiguity modules.
+\[
+\tilde c_{iR_j}
+=
+\frac{c^-_{iR_j}+c^+_{iR_j}}{2}.
+\]
 
-Rather than drawing a single ball, all balls in the urn are used to determine
-the payoff. Each color is associated with a monetary value and the payoff of
-the target option is the arithmetic mean of the values associated with all
-balls in the urn.
+---
 
-When the composition of the urn is known, the resulting payoff is therefore
-deterministic. The challenge comes from evaluating and aggregating several
-payoff components rather than from outcome risk or ambiguity.
+## 2.2 Benchmark risk prospects
 
-Respondents repeatedly choose between this complex option and a simple certain
-amount. The certain amount is adjusted adaptively to identify an interval
-containing the respondent's equivalent valuation of the complex option.
+The benchmark implementation uses four risk prospects:
 
-This design allows PRELICIT to study systematic heterogeneity in the valuation
-of complexity separately from attitudes toward risk and ambiguity.
+\[
+R_1=(80,0.25,0),
+\]
 
-## Structural estimation
+\[
+R_2=(80,0.50,0),
+\]
 
-The elicitation procedure produces interval-censored observations rather than
-arbitrary point estimates.
+\[
+R_3=(80,0.75,0),
+\]
 
-These intervals can be analyzed directly using model-free summaries or mapped
-into latent preference parameters using structural decision models.
+and
 
-PRELICIT is intended to support estimation procedures that explicitly account
-for:
+\[
+R_4=(100,0.50,20).
+\]
 
-- interval censoring;
-- heterogeneity in individual preferences;
-- respondent-level response noise;
-- joint estimation across preference domains;
-- alternative structural specifications across domains.
+The four tasks generate variation in both probability and payoff structure.
 
-## Design principles
+---
 
-PRELICIT is developed around four main principles:
+## 2.3 Model-free risk score
 
-1. low respondent burden;
-2. simplicity of individual decisions;
-3. structural interpretability;
-4. explicit treatment of measurement uncertainty and response noise.
+The raw risk score is the average certainty-equivalent midpoint across the four
+risk tasks:
 
-## Status
+\[
+RiskRaw_i
+=
+\frac{1}{4}
+\sum_{j=1}^{4}
+\tilde c_{iR_j}.
+\]
 
-This document describes the initial methodological specification of PRELICIT.
-The software implementation is currently under development.
+Higher values indicate a greater valuation of risky prospects and are therefore
+interpreted as greater risk tolerance.
+
+The default standardized measure is
+
+\[
+RiskZ_i
+=
+\frac{RiskRaw_i-\overline{RiskRaw}}
+{sd(RiskRaw)}.
+\]
+
+Thus:
+
+- \(RiskZ_i=0\) corresponds to the sample mean;
+- \(RiskZ_i=1\) corresponds to one sample standard deviation above the mean;
+- higher values indicate greater risk tolerance.
+
+---
+
+# 3. Time
+
+## 3.1 Task
+
+A time task elicits the sooner equivalent of a later monetary payment.
+
+For a payment \(x_j\) received at date \(t_j+\tau_j\), respondents repeatedly
+choose between the later payment and an amount available at the sooner date
+\(t_j\).
+
+The procedure returns
+
+\[
+[c^-_{iT_j},c^+_{iT_j}],
+\]
+
+with midpoint
+
+\[
+\tilde c_{iT_j}
+=
+\frac{c^-_{iT_j}+c^+_{iT_j}}{2}.
+\]
+
+A larger sooner equivalent means that the respondent requires a larger amount
+at the sooner date to give up the later payment and therefore indicates greater
+patience.
+
+---
+
+## 3.2 Benchmark time prospects
+
+The benchmark implementation uses four time prospects:
+
+| Task | Later amount | Sooner date | Additional delay |
+|------|--------------|-------------|------------------|
+| T1 | 80 | 1 day | 3 months |
+| T2 | 80 | 1 day | 6 months |
+| T3 | 80 | 1 day | 12 months |
+| T4 | 80 | 6 months | 6 months |
+
+These tasks vary both the length of the delay and, for T4, the timing of the
+sooner outcome.
+
+---
+
+## 3.3 Model-free patience score
+
+The raw time score is
+
+\[
+TimeRaw_i
+=
+\frac{1}{4}
+\sum_{j=1}^{4}
+\tilde c_{iT_j}.
+\]
+
+Higher values indicate greater patience.
+
+The default standardized measure is
+
+\[
+PatienceZ_i
+=
+\frac{TimeRaw_i-\overline{TimeRaw}}
+{sd(TimeRaw)}.
+\]
+
+Higher values therefore indicate greater patience.
+
+### Interpretation
+
+This measure is model-free in the sense that its construction requires no
+assumption about the functional form of utility or discounting.
+
+It should not, however, be interpreted as a pure structural measure of time
+preference. Under nonlinear utility, sooner equivalents can depend jointly on
+utility curvature and discounting.
+
+The model-free score is therefore best interpreted as an empirical measure of
+intertemporal valuation.
+
+---
+
+# 4. Ambiguity
+
+## 4.1 Principle
+
+Ambiguity attitudes are measured by comparing the valuation of an ambiguous
+prospect with the valuation of a matched risky prospect.
+
+For ambiguity task \(A_j\), let
+
+\[
+\tilde c^{amb}_{iA_j}
+\]
+
+denote the midpoint of the elicited equivalent for the ambiguous prospect, and
+
+\[
+\tilde c^{risk}_{iA_j}
+\]
+
+the midpoint for the corresponding risky benchmark.
+
+The task-level ambiguity difference is
+
+\[
+d^{A}_{ij}
+=
+\tilde c^{amb}_{iA_j}
+-
+\tilde c^{risk}_{iA_j}.
+\]
+
+If the ambiguous prospect is valued less than its matched risky benchmark, then
+
+\[
+d^{A}_{ij}<0,
+\]
+
+which is consistent with ambiguity aversion.
+
+---
+
+## 4.2 Model-free ambiguity score
+
+With three benchmark ambiguity tasks, define
+
+\[
+AmbiguityRaw_i
+=
+\frac{1}{3}
+\sum_{j=1}^{3}
+d^{A}_{ij}.
+\]
+
+Under this convention:
+
+- larger values indicate greater ambiguity tolerance;
+- smaller values indicate greater ambiguity aversion.
+
+The standardized score is
+
+\[
+AmbiguityToleranceZ_i
+=
+\frac{AmbiguityRaw_i-\overline{AmbiguityRaw}}
+{sd(AmbiguityRaw)}.
+\]
+
+Higher values indicate greater ambiguity tolerance.
+
+For applications where a measure of ambiguity *aversion* is preferred, users
+can simply reverse the sign:
+
+\[
+AmbiguityAversionZ_i
+=
+-
+AmbiguityToleranceZ_i.
+\]
+
+---
+
+# 5. Complexity
+
+## 5.1 Principle
+
+Complexity attitudes are measured by comparing the valuation of a complex
+prospect with that of a simpler economically matched benchmark.
+
+Let
+
+\[
+\tilde c^{simple}_{iC}
+\]
+
+denote the midpoint of the equivalent elicited for the simple prospect and
+
+\[
+\tilde c^{complex}_{iC}
+\]
+
+the midpoint for the corresponding complex prospect.
+
+Define the complexity penalty as
+
+\[
+ComplexityRaw_i
+=
+\tilde c^{simple}_{iC}
+-
+\tilde c^{complex}_{iC}.
+\]
+
+If
+
+\[
+\tilde c^{complex}_{iC}
+<
+\tilde c^{simple}_{iC},
+\]
+
+then
+
+\[
+ComplexityRaw_i>0,
+\]
+
+meaning that the respondent values the complex representation less than the
+simple benchmark.
+
+Higher values are therefore interpreted as greater complexity aversion.
+
+---
+
+## 5.2 Standardized complexity score
+
+The default standardized score is
+
+\[
+ComplexityAversionZ_i
+=
+\frac{ComplexityRaw_i-\overline{ComplexityRaw}}
+{sd(ComplexityRaw)}.
+\]
+
+Higher values indicate greater complexity aversion.
+
+---
+
+# 6. Standardization
+
+## 6.1 Default transformation
+
+PRELICIT standardizes individual-level domain scores using the sample mean and
+standard deviation:
+
+\[
+Z_i
+=
+\frac{S_i-\bar S}{sd(S)},
+\]
+
+where \(S_i\) denotes the corresponding raw domain score.
+
+The standardized measures are therefore relative measures within the analytical
+sample.
+
+By construction:
+
+\[
+E[Z]=0,
+\qquad
+sd(Z)=1.
+\]
+
+The principal advantage over rank transformations is that z-scores preserve
+information about distances between respondents.
+
+For example, an individual whose raw score lies far above the mean remains far
+above the mean after standardization.
+
+---
+
+## 6.2 Sample dependence
+
+Because z-scores depend on the mean and standard deviation of the reference
+sample, they are not intrinsically comparable across independently standardized
+datasets.
+
+For replication, longitudinal analysis, or comparisons across samples,
+researchers should either:
+
+1. retain and report the raw scores;
+2. use a common reference mean and standard deviation;
+3. pool samples before standardization when substantively appropriate.
+
+PRELICIT therefore always retains raw scores in addition to standardized
+scores.
+
+---
+
+# 7. Optional rank-based measures
+
+Rank and percentile transformations are available as optional robustness
+measures.
+
+For a raw score \(S_i\), a rank-based transformation uses only the respondent's
+relative position in the empirical distribution.
+
+Rank transformations have two advantages:
+
+- robustness to extreme values;
+- minimal reliance on cardinal differences between raw scores.
+
+Their main disadvantage is that they discard information on distances between
+respondents.
+
+For this reason, PRELICIT uses standardized raw scores as the default and ranks
+as an optional transformation.
+
+---
+
+# 8. Recommended output variables
+
+A standard PRELICIT implementation should retain three levels of information.
+
+## 8.1 Task-level outputs
+
+For every respondent and prospect:
+
+- lower interval bound;
+- upper interval bound;
+- interval width;
+- midpoint;
+- number of completed bisection steps.
+
+For example:
+
+```text
+risk_r1_lower
+risk_r1_upper
+risk_r1_midpoint
+risk_r1_width
+
+time_t1_lower
+time_t1_upper
+time_t1_midpoint
+time_t1_width
